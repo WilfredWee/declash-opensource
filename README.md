@@ -2,7 +2,7 @@
 #### Note: This project is currently inactive. If you are interested to work on this, feel free to fork it or even better, get in touch with me and see if we can work something out.
 
 ## Introduction
-This software was initially built in early 2014 to serve the needs of the University of British Columbia Debating Society, where during peak season (at the start of the school term), there are many debaters and no efficient conduct debate practice.
+This software was initially built in early 2014 to serve the needs of the University of British Columbia Debating Society, where during peak season (at the start of the school term), there are many debaters and no efficient way to conduct debate practice.
 
 This software aims to solve that by registering debaters/judges, and assign them partners, rooms and roles accordingly.
 
