@@ -1,0 +1,361 @@
+<link href="/static/app/lib/css/management.css" rel="stylesheet">
+<body ng-show="globals.is_authenticated">
+    <script type="text/ng-template" id="sessioncreate.html">
+        <div class="modal-header">
+        <h3>Customize Your Session</h3>
+        </div>
+        <div class="modal-body">
+            <form name="sessionForm" novalidate>
+                <!-- PARTNER PREF -->
+                <div class="form-group">
+                    <label>Partner pairing priority:</label>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="session.partner_pref" btn-radio="'NNPP'">NovNov/ProPro</button>
+                        <button type="button" class="btn btn-info" ng-model="session.partner_pref" btn-radio="'NPNP'">NovPro/NovPro</button>
+                        <button type="button" class="btn btn-info" ng-model="session.partner_pref" btn-radio="'RAND'">Random</button>
+                    </div>
+                </div>
+
+                <!-- ROOM PREF -->
+                <div class="form-group">
+                    <label>Room allocation priority <strong>(COMING SOON)</strong>:</label>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="session.room_pref" btn-radio="'NNPP'">NovPro Separated</button>
+                        <button type="button" class="btn btn-info" ng-model="session.room_pref" btn-radio="'NPNP'">NovPro Mixed</button>
+                        <button type="button" class="btn btn-info" ng-model="session.room_pref" btn-radio="'RAND'">Random</button>
+                    </div>
+                </div>
+
+                <!-- FORMAT -->
+                <div class="form-group">
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="session.format" btn-radio="'AP'">Asian Parliamentary (3v3)</button>
+                        <button type="button" class="btn btn-info" ng-model="session.format" btn-radio="'BP'">British Parliamentary</button>
+                        <button type="button" class="btn btn-info" ng-model="session.format" btn-radio="'CP'">Canadian Parliamentary (2v2 w/ Position Preference)</button>
+                    </div>
+                </div>    
+            </form>
+
+            </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" ng-click="submit(session)">Submit</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+        </div>
+    </script>
+
+    <script type="text/ng-template" id="teamcreate.html">
+        <div class="modal-header">
+        <h3>Create a Team</h3>
+        </div>
+        <form name="teamForm" novalidate>
+        <div class="modal-body">
+                <!-- DEBATER -->
+                <div class="form-group">
+                    <label>Debater 1:</label>
+                        <div class="row">
+                            <div class="col-xs-8">
+                                <input type="text" name="Debater 1" placeholder="Type to search." class="form-control" ng-model="query">
+                                <label>Selected: {[{teamDebaters[0].name}]}</label>
+                            </div>
+                            <div class="col-xs-4">
+                                <p>Click to add.</p>
+                                <li ng-repeat="debater in session.debaters | filter:query | filter:nullTeamFilter | limitTo:3">
+                                <label ng-click="addDebater(debater, 0)">{[{debater.name}]}</label>
+                                </li>
+                            </div>
+                        </div>
+                </div>
+
+                <!-- DEBATER -->
+                <div class="form-group">
+                    <label>Debater 2:</label>
+                        <div class="row">
+                            <div class="col-xs-8">
+                                <input type="text" name="Debater 2" placeholder="Type to search." class="form-control" ng-model="query2">
+                                <label>Selected: {[{teamDebaters[1].name}]}</label>
+                            </div>
+                            <div class="col-xs-4">
+                                <p>Click to add.</p>
+                                <li ng-repeat="debater in session.debaters | filter:query2 | filter:nullTeamFilter | limitTo:3">
+                                <label ng-click="addDebater(debater, 1)">{[{debater.name}]}</label>
+                                </li>
+                            </div>
+                        </div>
+
+                </div>
+
+                <!-- POSITION -->
+                <div ng-hide="session.format != 'CP'"class="form-group">
+                    <label>Position:</label>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-info" ng-model="team.position" btn-radio="'GV'">Government</button>
+                            <button type="button" class="btn btn-info" ng-model="team.position" btn-radio="'OP'">Opposition</button>
+                        </div>
+                </div>
+
+                <!-- ROOM -->
+                <div class="form-group">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                            {[{team.room.location}]} <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li ng-repeat="room in rooms | filter: notInUsedRoom">
+                                <a href="" ng-click="team.room = room">{[{room.location}]}</a>
+                            </li>
+                          </ul>
+                    </div>
+                </div>    
+            
+
+            </div>
+            <div class="alert alert-danger" ng-show="errorMessage">
+                <strong>Error! </strong>{[{errorMessage}]}
+            </div>       
+    
+        <div class="modal-footer">
+            <button class="btn btn-primary" ng-click="submit(team)" ng-disabled="!team.room">Submit</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+        </div>
+        </form>
+    </script>
+
+    <script type="text/ng-template" id="finalize.html">
+        <div class="modal-header">
+        <h3>Are you sure that you want to close this session?</h3>
+        <h4>All data from this session will be lost. Your rooms will be preserved.</h2>
+        </div>     
+    
+        <div class="modal-footer">
+            <button class="btn btn-danger" ng-click="confirm()">Submit</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+        </div>
+        </form>
+    </script>
+
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                <li class="sidebar-brand"><a href="#/management">Session Control</a>
+                </li>
+                <li><a href="#/management">Dashboard</a>
+                </li>
+                <li ng-show="session.owner"><a href="" ng-click="finalize()">Close Session</a>
+                </li>
+                <li><a href="/admin/">Admin</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Page content -->
+        <div id="page-content-wrapper">
+            <div class="content-header">
+                <h1>
+                    <a id="menu-toggle" href="#" class="btn btn-default"><i class="icon-reorder"></i></a>
+                    Welcome, {[{session.owner}]}!
+                </h1>
+            </div>
+            <!-- Keep all page content within the page-content inset div! -->
+            <div class="page-content inset">
+                <div class="row">
+                    <div class="row">
+                        <div class="col-md-12">
+                        </div>
+                        <div class="col-md-12" ng-hide="session.owner">
+                            <p>Create New Session:</p>
+                            <button class="btn btn-primary" ng-click="createSession()">Create</button>
+                        </div>
+                        <div class="col-md-12" ng-show="session.owner">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div ng-hide="session.published">
+                                        <button class="btn btn-danger" ng-show="session.openForReg" ng-click="toggleReg(false)">Close Registration</button>
+                                        <button class="btn btn-primary" ng-hide="session.openForReg" ng-click="toggleReg(true)">Open Registration</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-primary" ng-hide="session.published" ng-click="createTeam()">Create Team</button>
+                                </div>
+                                <div ng-hide="session.openForReg">
+                                    <div class="col-md-3">
+                                        <button class="btn btn-danger" ng-hide="session.published" ng-click="deClashify()">DeClash-ify</button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-success" ng-hide="session.published" ng-click="togglePublish(true)">Publish</button>
+                                        <button class="btn btn-warning" ng-show="session.published" ng-click="togglePublish(false)">UnPublish</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <alert ng-show="alerts" ng-repeat="alert in alerts" type="danger" close="alerts.splice($index,1)">
+                                {[{alert}]}
+                            </alert>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="row">
+                                <h3><p>Rooms</p></h3>
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Location</th>
+                                            <th>Group</th>
+                                        </tr>
+                                    </thead>
+                                    <tr>
+                                        <form name="roomForm">
+                                            <td><button class="btn btn-primary btn-xs" ng-click="addRoom(room)" ng-disabled="room.location.length < 1">Add Room</button></td>
+                                            <td><input type="text" class="form-control" ng-model="room.location" required></td>
+                                            <td><input type="text" class="form-control" pattern="\d*" ng-model="room.group" placeholder="0"></td>
+
+                                        </form>
+                                    </tr>
+                                    <tr ng-repeat="room in rooms">
+
+                                        <td>
+                                            <button ng-click="deleteRoom(room)" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-trash"></span></button>
+                                        </td>
+                                        <td>{[{room.location}]}</td>
+                                        <td>{[{room.group}]}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="row">
+                                <h3><p>Debaters</p></h3>
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Name</th>
+                                            <th>Teammates</th>
+                                            <th ng-show="session.format == 'AP'">Teammates 2</th>
+                                            <th>NOV/PRO</th>
+                                            <th>Preference</th>
+                                            <th ng-show="session.format == 'CP'">Position</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody ng-repeat="debater in tableDebaters |filter:teamNullDebaters |orderBy:['-nov_pro', 'debate_judge_spectate']" ng-init="debater.collapsed = false">
+                                        <tr>
+                                            <td> <button class="btn btn-warning btn-xs" ng-click="debater.collapsed = !debater.collapsed"><span class="glyphicon glyphicon-edit"></button></td>
+                                            <!-- <td> <button ng-click="deleteDebater(debater)" class="btn btn-danger btn-xs">DELETE</button></td> -->
+                                            <td><span ng-style="createDiffStyleForMessage(debater)" popover="{[{debater.custom_requests}]}" popover-trigger="mouseenter">{[{debater.name}]}</span></td>
+                                            <!-- <td> <button ng-show="debater.teammates" ng-click="deleteDebater(debater.teammates[0])" class="btn btn-danger btn-xs">DELETE</button></td> -->
+                                            <td><span ng-style="createDiffStyleForMessage(debater.teammates[0])" popover="{[{debater.teammates[0].custom_requests}]}" popover-trigger="mouseenter">{[{debater.teammates[0].name}]}</span></td>
+                                            <td ng-show="session.format == 'AP'">{[{debater.teammates[1].name}]}</td>
+                                            <td>{[{debater.nov_pro}]}</td>
+                                            <td>{[{debater.debate_judge_spectate}]}</td>
+                                            <td ng-show="session.format == 'CP'">{[{debater.position}]}</td>
+                                            
+                                        </tr>
+                                        <tr ng-show="debater.collapsed">
+                                            <div collapse="debater.collapsed">
+                                                <td></td>
+                                                <td>
+                                                    <button ng-click="deleteDebater(debater)" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-trash"></span> {[{debater.name}]}</button>
+                                                </td>
+                                                <td>
+                                                    <button ng-show="debater.teammates" ng-click="deleteDebater(debater.teammates[0])" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-trash"></span> {[{debater.teammates[0].name}]}</button>
+                                                </td>
+                                                <td>
+                                                    <select ng-hide="debater.teammates" ng-model="debater.debate_judge_spectate" ng-change="patchDebater(debater, 'debate_judge_spectate', debater.debate_judge_spectate)">
+                                                        <option value="DEBATE">Debate</option>
+                                                        <option value="DJ">Debate/Judge</option>
+                                                        <option value="JUDGE">Judge</option>
+                                                        <option value="SPEC">Spectate</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select ng-show="session.format == 'CP' "ng-model="debater.position" ng-change="patchDebater(debater, 'position', debater.position)">
+                                                        <option value="GV">Gov</option>
+                                                        <option value="OP">Opp</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button ng-show="debater.teammates" class="btn btn-warning btn-xs" ng-click="debater.teammates = []; patchDebater(debater, 'teammates', [])">Unlink</button>
+                                                </td>
+                                            </div>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h3><p>Teams</p></h3>
+                            <p>(<strong>DO NOT</strong> edit team members name if you plan to Declashify again this session.)</p>
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Location</th>
+                                        <th>Position</th>
+                                        <th>Name</th>
+                                        <th>Name</th>
+                                        <th ng-show="session.format == 'AP'">Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody ng-repeat="team in tableTeams | orderBy:['room_location', 'debaters[1]', 'position']" ng-init="team.collapsed = false">
+                                    <tr>
+                                        <td> 
+                                            <button class="btn btn-warning btn-xs" ng-click="team.collapsed = !team.collapsed"><span class="glyphicon glyphicon-edit"></button>
+                                        </td>
+                                        <td>{[{team.room_location}]}</td>
+                                        <td>{[{team.position}]}</td>
+                                        <td>{[{team.team_members[0].name}]}</td>
+                                        <td>{[{team.team_members[1].name}]}</td>
+                                        <td ng-show="session.format == 'AP'">{[{team.team_members[2].name}]}</td>
+                                    </tr>
+                                    <tr ng-show="team.collapsed">
+                                        <div collapse="team.collapsed">
+                                            <td>
+                                                <button ng-click="deleteTeam(team)" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-trash"></span></button>
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control" ng-model="team.team_members[0].name" ng-blur="patchDebater(team.team_members[0], 'name', team.team_members[0].name)">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control" ng-model="team.team_members[1].name" ng-blur="patchDebater(team.team_members[1], 'name', team.team_members[1].name)">
+                                            </td>
+                                            <td ng-show="session.format == 'AP'">
+                                                <input type="text" class="form-control" ng-model="team.team_members[2].name" ng-blur="patchDebater(team.team_members[2], 'name', team.team_members[2].name)">
+                                            </td>
+                                        </div>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom JavaScript for the Menu Toggle -->
+    <script>
+    $("#menu-toggle").click(function(e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("active");
+    });
+    </script>
+    <script type="text/javascript">
+        if (navigator.userAgent.match(/IEMobile\/10\.0/)) {
+          var msViewportStyle = document.createElement('style')
+          msViewportStyle.appendChild(
+            document.createTextNode(
+              '@-ms-viewport{width:auto!important}'
+            )
+          )
+          document.querySelector('head').appendChild(msViewportStyle)
+        }
+    </script>
+</body>
+

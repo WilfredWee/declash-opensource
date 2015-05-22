@@ -1,0 +1,64 @@
+<div ng-show="globals.is_authenticated">
+    <script type="text/ng-template" id="sessioncreate.html">
+        <div class="modal-header">
+        <h3>Customize Your Session</h3>
+        </div>
+        <div class="modal-body">
+            <form name="sessionForm" novalidate>
+                <!-- PARTNER PREF -->
+                <div class="form-group">
+                    <label>Partner pairing priority:</label>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="session.partner_pref" btn-radio="'NNPP'">NovNov/ProPro</button>
+                        <button type="button" class="btn btn-info" ng-model="session.partner_pref" btn-radio="'NPNP'">NovPro/NovPro</button>
+                        <button type="button" class="btn btn-info" ng-model="session.partner_pref" btn-radio="'RAND'">Random</button>
+                    </div>
+                </div>
+
+                <!-- ROOM PREF -->
+                <div class="form-group">
+                    <label>Room allocation priority:</label>
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="session.room_pref" btn-radio="'NNPP'">NovPro Separated</button>
+                        <button type="button" class="btn btn-info" ng-model="session.room_pref" btn-radio="'NPNP'">NovPro Mixed</button>
+                        <button type="button" class="btn btn-info" ng-model="session.room_pref" btn-radio="'RAND'">Random</button>
+                    </div>
+                </div>
+
+                <!-- FORMAT -->
+                <div class="form-group">
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="session.format" btn-radio="'AP'">Asian Parliamentary</button>
+                        <button type="button" class="btn btn-info" ng-model="session.format" btn-radio="'BP'">British Parliamentary</button>
+                        <button type="button" class="btn btn-info" ng-model="session.format" btn-radio="'CP'">Canadian Parliamentary</button>
+                    </div>
+                </div>    
+            </form>
+
+            </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" ng-click="submit(session)">Submit</button>
+            <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+        </div>
+    </script>
+
+    <div ng-hide="session.owner">
+        <label>Create New Session:</label>
+        <button ng-click="createSession()">Create</button>
+    </div>
+
+    <div ng-show="session.owner">
+        <button class="btn btn-danger" ng-show="session.openForReg" ng-click="toggleReg(false)">Close Registration</button><br/>
+        <button class="btn btn-primary" ng-hide="session.openForReg" ng-click="toggleReg(true)">Open Registration</button><br/>
+        <div ng-hide='session.openForReg'>
+            <button class="btn btn-danger"  ng-click="deClashify()">DeClash-ify</button><br/>
+            <button class="btn btn-success" ng-hide="session.published" ng-click="togglePublish(true)">Publish</button><br/>
+            <button class="btn btn-success" ng-show="session.published" ng-click="togglePublish(false)">Publish</button><br/>
+        </div>
+        <li  ng-show="session.openForReg" ng-repeat="debater in debaters">{[{debater.name}]}</li>
+        <br/>
+        <li ng-hide="session.openForReg" ng-repeat="team in teams">
+            {[{team}]}
+        </li>
+    </div>
+</div> 

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="DeClash">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bringing Debaters Together">
+    <meta name="author" content="Wilfred Wee">
+
+    <title>DeClash</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{ STATIC_URL }}app/lib/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="{{ STATIC_URL }}app/lib/css/bootstrap-theme.css" rel="stylesheet"> -->
+
+    <!-- Custom Google Web Font -->
+    <link href="{{ STATIC_URL }}app/lib/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+    <!-- Add custom CSS here -->
+    <link rel="icon" type="image/png" href="{{ STATIC_URL }}app/lib/img/DeClash-logo-contrast-small.png">
+    
+    <!-- JavaScript -->
+    <script src="{{ STATIC_URL }}app/lib/js/jquery-1.10.2.js"></script>
+    <script src="{{ STATIC_URL }}app/lib/js/bootstrap.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-route.min.js"></script>
+    <!-- // <script src="{{ STATIC_URL }}app/lib/js/angular/angular-resource.js"></script> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-cookies.min.js"></script>
+    <script src="{{ STATIC_URL }}app/lib/js/lodash.min.js"></script>
+    <script src="{{ STATIC_URL }}app/lib/js/restangular.js"></script>
+    <script src="{{ STATIC_URL }}app/lib/js/ui-bootstrap-tpls-0.10.0.js"></script>
+    <script src="{{ STATIC_URL }}app/js/app.js"></script>
+    <script src="{{ STATIC_URL }}app/js/services.js"></script>
+    <script src="{{ STATIC_URL }}app/js/controllers.js"></script>
+    <script src="{{ STATIC_URL }}app/js/filters.js"></script>
+    <script src="{{ STATIC_URL }}app/js/directives.js"></script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-4375767-5', 'declash.com');
+      ga('send', 'pageview');
+
+    </script>
+</head>
+
+<body ng-controller="AppController" ng-init="initialize('{{ user.is_authenticated }}')">
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#/">DeClash</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse navbar-right navbar-ex1-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="#/sessions">Sessions</a>
+                    </li>
+                    <li><a ng-hide="globals.is_authenticated" href="#/management">Login</a>
+                    </li>
+                    <li><a ng-show="globals.is_authenticated" href="#/management">Management</a>
+                    </li>
+                    <li><a ng-show="globals.is_authenticated" href="/admin/logout/">Logout</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+    <div ng-view class="view-container"></div>
+</body>
+
+</html>
+

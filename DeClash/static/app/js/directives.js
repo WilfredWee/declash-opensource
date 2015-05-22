@@ -1,0 +1,1 @@
+"use strict";var declashDirectives=angular.module("declashDirectives",[]);declashDirectives.directive("appVersion",["version",function(e){return function(t,n,r){n.text(e)}}])

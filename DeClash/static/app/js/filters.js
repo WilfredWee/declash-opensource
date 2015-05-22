@@ -1,0 +1,1 @@
+"use strict";var declashFilters=angular.module("declashFilters",[]);declashFilters.filter("interpolate",["version",function(e){return function(t){return String(t).replace(/\%VERSION\%/mg,e)}}])

@@ -1,0 +1,7 @@
+.elasticbeanstalk/
+DeClash/static/app/lib/img
+DeClash/local_dev_settings.py
+*.db
+*.pyc
+*.pyo
+*.log
