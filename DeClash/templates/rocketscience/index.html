@@ -18,7 +18,7 @@
 
     <!-- Add custom CSS here -->
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}app/lib/img/DeClash-logo-contrast-small.png">
-    
+
     <!-- JavaScript -->
     <script src="{{ STATIC_URL }}app/lib/js/jquery-1.10.2.js"></script>
     <script src="{{ STATIC_URL }}app/lib/js/bootstrap.js"></script>
@@ -68,7 +68,7 @@
                     </li>
                     <li><a ng-show="globals.is_authenticated" href="#/management">Management</a>
                     </li>
-                    <li><a ng-show="globals.is_authenticated" href="/admin/logout/">Logout</a>
+                    <li><a ng-show="globals.is_authenticated" href="/api-auth/logout/?next=/api/">Logout</a>
                     </li>
                 </ul>
             </div>

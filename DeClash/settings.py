@@ -10,23 +10,23 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+# BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'some_key'
+SECRET_KEY = 'twp_pc&@h!sg)sw3nja&x)8%ihr^9u-oijzm!dhqr0a-u*alwt'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = [
-    '.declash-env-qb8tce5k7c.elasticbeanstalk.com',
-    '.declash.com',
+    '*'
     ]
 
 
@@ -42,7 +42,6 @@ INSTALLED_APPS = (
     'rest_framework',
     'rocketscience',
     'autocomplete_light',
-    'storages',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -62,22 +61,22 @@ WSGI_APPLICATION = 'DeClash.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
-if not DEBUG:
-    DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ['RDS_DB_NAME'],
-        'USER': os.environ['RDS_USERNAME'],
-        'PASSWORD': os.environ['RDS_PASSWORD'],
-        'HOST': os.environ['RDS_HOSTNAME'],
-        'PORT': os.environ['RDS_PORT'],
-        }
-    }
-    REST_FRAMEWORK = {
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-    )
-    }
+# if not DEBUG:
+#     DATABASES = {
+#         'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.environ['RDS_DB_NAME'],
+#         'USER': os.environ['RDS_USERNAME'],
+#         'PASSWORD': os.environ['RDS_PASSWORD'],
+#         'HOST': os.environ['RDS_HOSTNAME'],
+#         'PORT': os.environ['RDS_PORT'],
+#         }
+#     }
+#     REST_FRAMEWORK = {
+#     'DEFAULT_RENDERER_CLASSES': (
+#         'rest_framework.renderers.JSONRenderer',
+#     )
+#     }
 
 # DATABASES = {
 #     'default': {
@@ -94,6 +93,13 @@ if not DEBUG:
 #     'rest_framework.renderers.JSONRenderer',
 # )
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
 
 
 # Internationalization
@@ -113,16 +119,18 @@ USE_TZ = True
 
 PROJECT_ROOT = os.path.join(os.path.abspath(os.path.dirname(__name__)), 'DeClash/')
 TEMPLATE_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'templates')
-STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static')
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
-STATICFILES_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
-AWS_ACCESS_KEY_ID = 'some_key'
-AWS_SECRET_ACCESS_KEY = 'some_key'
-AWS_STORAGE_BUCKET_NAME = 'some_key'
+# STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static')
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+# STATICFILES_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+# STATICFILES_STORAGE = 'DeClash.S3PipelineStorage.S3PipelineStorage'
+# AWS_ACCESS_KEY_ID = 'AKIAISKXNNE5RXMZBRCQ'
+# AWS_SECRET_ACCESS_KEY = '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'
+# AWS_STORAGE_BUCKET_NAME = 'elasticbeanstalk-us-west-2-603144073701'
 
 # S3_URL = 'http://s3-us-west-2.amazonaws.com/%s' % AWS_STORAGE_BUCKET_NAME
 # STATIC_URL = S3_URL + '/'
-STATIC_URL = 'http://static_url_here'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static').replace('\\', '/')
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
     os.path.join(PROJECT_ROOT, "static"),
@@ -168,6 +176,29 @@ TEMPLATE_LOADERS = (
 #     # Don't forget to use absolute paths, not relative paths.
 # )
 
-if DEBUG:
-    from local_dev_settings import *
+# if DEBUG:
+#   from local_dev_settings import *
+
+LOGGING = {
+ 'version': 1,
+ 'disable_existing_loggers': False,
+ 'filters': {
+ 'require_debug_false': {
+ '()': 'django.utils.log.RequireDebugFalse'
+ }
+ },
+ 'handlers': {
+ 'logfile': {
+ 'class': 'logging.handlers.WatchedFileHandler',
+ 'filename': 'D:\home\site\wwwroot\myapp.log'
+ }
+ },
+ 'loggers': {
+ 'django': {
+ 'handlers': ['logfile'],
+ 'level': 'ERROR',
+ 'propagate': False,
+ }
+ }
+ }
 

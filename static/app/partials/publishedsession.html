@@ -1,0 +1,30 @@
+<link href="/static/app/lib/css/publishedsession.css" rel="stylesheet">
+<div class="pSessionContainer">
+    <div class="row">
+    <div class="container-fluid">
+    <div class="col-xs-12 col-md-4">
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <p>Teams:</p>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Room</th>
+                    <th>Position</th>
+                    <th>Debater 1</th>
+                    <th>Debater 2</th>
+                </tr>
+            </thead>
+            <tr ng-repeat="team in teams | orderBy:['room_location', 'debaters[1]', 'position']">
+                <td>{[{team.room_location}]}</td>
+                <td>{[{team.position}]}</td>
+                <td>{[{team.debaters[0]}]}</td>
+                <td>{[{team.debaters[1]}]}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="col-xs-12 col-md-4">
+    </div>
+    </div>
+    </div>
+</div>

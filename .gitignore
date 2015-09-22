@@ -1,7 +1,13 @@
 .elasticbeanstalk/
-DeClash/static/app/lib/img
+.ebextensions/
 DeClash/local_dev_settings.py
-*.db
+tmp.db
 *.pyc
-*.pyo
-*.log
+env/
+.idea/
+*.sqlite3
+*.sublime-workspace
+*.sublime-project
+
+
+

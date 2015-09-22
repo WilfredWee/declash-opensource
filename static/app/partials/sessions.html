@@ -1,0 +1,133 @@
+<div class="sessionsContainer">
+<link href="/static/app/lib/css/sessions.css" rel="stylesheet">
+    <script type="text/ng-template" id="sessionreg2.html">
+        <div class="modal-header">
+            <h3>Enter your information</h3>
+        </div>
+        <form name="debaterForm" novalidate>
+            <div class="modal-body">
+                <!-- NAME -->
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="Name" placeholder="Required. You are encouraged to use consistent, identifiable name." class="form-control" ng-model="debatername" required>
+                    <label>{[{debatername}]}</label>
+                </div>
+
+                <!-- TEAMMATES -->
+                <div class="form-group">
+                    <label>Teammates</label>
+                    <div class="row">
+                        <div class="col-xs-8">
+                            <input type="text" name="Teammates" placeholder="Search for your teammate." class="form-control" ng-model="query">
+                            <label>Selected teammate: {[{teammate.name}]}</label>
+                        </div>
+                        <div class="col-xs-4">
+                            <p>Click to add.</p>
+                            <li ng-repeat="debater in viableTeammates | filter:query | limitTo:3">
+                            <label ng-click="addTeammate(debater, 0)">{[{debater.name}]}</label>
+                            </li>
+                        </div>
+                    </div>
+                </div>
+
+                <div ng-show="session.format == 'AP' && teammate.id" class="ng-hide">
+                    <div class="row">
+                        <div class="col-xs-8">
+                            <input type="text" name="Teammates" placeholder="Search for your 2nd teammate." class="form-control" ng-model="query2">
+                            <label>Selected teammate: {[{teammate2.name}]}</label>
+                        </div>
+                        <div class="col-xs-4">
+                            <p>Click to add.</p>
+                            <li ng-repeat="debater in viableTeammates | filter:query2 | filter:teammateFilter | limitTo:3">
+                            <label ng-click="addTeammate(debater, 1)">{[{debater.name}]}</label>
+                            </li>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- NOV/PRO -->
+                <div class="form-group">
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="novpro" btn-radio="'NOV'">Novice</button>
+                        <button type="button" class="btn btn-info" ng-model="novpro" btn-radio="'PRO'">Pro</button>
+                    </div>
+                </div>
+
+                <!-- DEBATE/JUDGE/SPECTATE -->
+                <div class="form-group">
+                    <div class="button-group">
+                        <button type="button" class="btn btn-info" ng-model="djs" btn-radio="'DEBATE'">Debate</button>
+                        <button type="button" class="btn btn-info" ng-model="djs" btn-radio="'JUDGE'">Judge</button>
+                        <button type="button" class="btn btn-info" ng-model="djs" btn-radio="'DJ'">Debate/Judge</button>
+                        <button type="button" class="btn btn-info" ng-model="djs" btn-radio="'SPEC'">Spectate</button>
+                    </div>
+                </div>
+
+                <!-- POSITION PREF -->
+                <div ng-show="session.format == 'CP' && teammate.id" class="ng-hide">
+                    <div class="form-group">
+                        <div class="button-group">
+                            <button type="button" class="btn btn-info" ng-model="positionpref" btn-radio="'GV'">Government</button>
+                            <button type="button" class="btn btn-info" ng-model="positionpref" btn-radio="'OP'">Opposition</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CUSTOM REQUEST -->
+                <div class="form-group">
+                    <label>Custom Request</label>
+                    <input type="text" name="CustomRequest" placeholder="A short request message." class="form-control" ng-model="customrequest">
+                </div>
+
+                <!-- ERROR MESSAGE -->
+                <div class="alert alert-danger" ng-show="errorMessage">
+                    <strong>Error! </strong>{[{errorMessage}]}
+                </div>       
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" ng-click="Submit()" ng-disabled="debaterForm.$invalid">Submit</button>
+                <button class="btn btn-warning" ng-click="Cancel()">Cancel</button>
+            </div>
+        </form>
+    </script>
+    <div class="row">
+        <div class="col-xs-12 col-md-2"></div>
+        <div class="col-xs-12 col-md-8">
+            <h5><strong>Note: If you have teammates, then only the LAST person should register the teammates.</strong></h5>
+            <h5><strong>E.g. first person in the team register as an individual, second person should then include his/her teammate during registration.</strong></h5>
+            <h5><strong>For 3-person teams, the first 2 should register as individuals, the last person should register both teammates.</strong></h5>
+        </div>
+        <div class="col-xs-12 col-md-2"></div>
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col-xs-12 col-md-2"></div>
+        <div class="col-xs-12 col-md-4">
+            <p>Sessions Open For Registration:</p>
+            <div class="list-group" ng-repeat="session in sessions">
+               <a href="" ng-show="session.openForReg" class="list-group-item" ng-click="openForm(session)">{[{session.institution + ": " + session.owner}]}</a> 
+            </div>
+        </div>
+        <div class="col-xs-12 col-md-4">
+            <p>Published Sessions:</p>
+            <div class="list-group" ng-repeat="session in sessions">
+               <a href="#/sessions/{[{session.id}]}" ng-show="session.published" class="list-group-item">{[{session.institution + ": " + session.owner}]}</a> 
+            </div>
+        </div>
+        <div class="col-xs-12 col-md-2"></div>
+    </div>
+    <script type="text/javascript">
+        if (navigator.userAgent.match(/IEMobile\/10\.0/)) {
+          var msViewportStyle = document.createElement('style')
+          msViewportStyle.appendChild(
+            document.createTextNode(
+              '@-ms-viewport{width:auto!important}'
+            )
+          )
+          document.querySelector('head').appendChild(msViewportStyle)
+        }
+    </script>
+</div>
+
+
+

@@ -17,6 +17,8 @@ from rocketscience.serializers import DebaterSerializer, RoomSerializer, TeamSer
 
 from rocketscience.declasher import DeClasher
 
+import logging
+
 class DebaterAdminViewSet(viewsets.ModelViewSet):
     serializer_class = DebaterAdminSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -52,9 +54,13 @@ class SessionViewSet(viewsets.ModelViewSet):
         queryset = Session.objects.filter(owner=request.user.debateradmin).filter(finalized=False)
         session = get_object_or_404(queryset, pk=pk)
 
-        if request.QUERY_PARAMS.get('declashify', None) == 'true':
-            roomGroupList = request.QUERY_PARAMS.get('roomGroupList', [])
-            return DeClasher(session, roomGroupList).declashify()
+        logger = logging.getLogger(__name__)
+        logger.debug("declashify")
+        logger.debug(request.QUERY_PARAMS.get('declashify', None))
+        logger.debug(request.QUERY_PARAMS)
+
+        roomGroupList = request.QUERY_PARAMS.get('roomGroupList', [])
+        return DeClasher(session, roomGroupList).declashify()
 
         serializer = SessionSerializer(session)
         return Response(serializer.data)
@@ -82,7 +88,7 @@ class DebaterViewSet(viewsets.ModelViewSet):
                         d.teammates.add(objmate)
 
                 d.save()
-            
+
             obj.save()
 
 
@@ -124,11 +130,18 @@ class TeamViewSet(viewsets.ModelViewSet):
                 obj.position = random.choice(BPPosSet)
 
     def get_queryset(self):
-        publishedsessions = Session.objects.filter(published=True)
-        
+        publishedsessions = Session.objects.filter(published=True, finalized=False)
+
         if self.request.user.id is None:
             queryset = Team.objects.filter(session__in=publishedsessions)
             sessionID = self.request.QUERY_PARAMS.get('sessionID', None)
+
+            logger = logging.getLogger('superman')
+            logger.error('query params')
+            logger.error(self.request.QUERY_PARAMS)
+            logger.error('request get')
+            logger.error(self.request._request.GET)
+
             if sessionID:
                 queryset = queryset.filter(session_id=sessionID)
 

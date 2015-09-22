@@ -14,11 +14,11 @@ class DebaterSerializer(serializers.ModelSerializer):
     # teammates = serializers.HyperlinkedRelatedField(many=True, required=False,
     #                                               view_name='debater-detail',
     #                                               queryset=Debater.objects.filter(session__in=openedsessions))
-    # session =  serializers.HyperlinkedRelatedField(many=False, required=False, view_name='session-detail', 
+    # session =  serializers.HyperlinkedRelatedField(many=False, required=False, view_name='session-detail',
     # queryset=openedsessions)
     session = serializers.PrimaryKeyRelatedField(
         many=False, required=True)
-    teammates = serializers.PrimaryKeyRelatedField(many=True, required=False, 
+    teammates = serializers.PrimaryKeyRelatedField(many=True, required=False,
         queryset=Debater.objects.filter(session__in=openedsessions))
 
 
@@ -82,7 +82,7 @@ class DebaterSerializer(serializers.ModelSerializer):
                 if mate.teammates.exists():
                     raise serializers.ValidationError(
                         'Your teammates already have at least a partner.')
-                if mate.team.exists():
+                if mate.team and mate.team.exists():
                     raise serializers.ValidationError(
                         'Your chosen partner has already been assigned a team.')
         elif (format == 'BP' or format == 'CP') and len(teammates) <= 1:
@@ -90,7 +90,7 @@ class DebaterSerializer(serializers.ModelSerializer):
                 if mate.teammates.exists():
                     raise serializers.ValidationError(
                         'Your chosen partner already has a partner.')
-                if mate.team.exists():
+                if mate.team and mate.team.exists():
                     raise serializers.ValidationError(
                         'Your chosen partner has already been assigned a team.')
 
@@ -148,7 +148,7 @@ class TeamSerializer(serializers.ModelSerializer):
         if len(members) != debaterCount:
             raise serializers.ValidationError(
                 'There must be exactly 2 debaters in a team.')
-        
+
         for d in members:
             if d.teammates:
                 d.teammates.clear()
@@ -219,9 +219,9 @@ class SessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Session
-        fields = ('id', 'reg_date', 'debaters', 'teams', 'owner', 
+        fields = ('id', 'reg_date', 'debaters', 'teams', 'owner',
             'institution','openForReg','canEditDebater', 'finalized',
             'published', 'partner_pref', 'room_pref', 'format')
         read_only_fields = ('id', 'reg_date', 'canEditDebater', 'debaters')
         depth = 1
-        
+

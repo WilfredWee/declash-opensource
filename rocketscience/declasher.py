@@ -11,14 +11,19 @@ class DeClasher:
         self.requiredProJudges = 0
         self.roomGroupList = roomGroupList
         self.debatingRoomCount = 0
-        
+        self.debaters = list(session.debaters.all())
+        self.teams = list(session.teams.filter(debate_judge_spectate="DEBATE"))
+        self.createdTeams = []
+
+        self.noOfRooms = 0
+
 
         roomList = []
         if session.teams.count() > 0:
             for t in session.teams.all():
                 if not t.room in roomList:
                     roomList.append(t.room)
-        
+
 
         self.requiredProJudges = len(roomList)
 
@@ -30,7 +35,7 @@ class DeClasher:
             return self.declashifyBP()
         elif self.session.format == 'CP':
             return self.declashifyCP()
-            
+
         serializer = SessionSerializer(self.session)
         return Response(serializer.data)
 
@@ -71,7 +76,7 @@ class DeClasher:
         needJudgeCount = relevantDebatersCount/roomSize
         remainderDebaterCount = relevantDebatersCount % roomSize
         haveJudgeCount = self.session.debaters.filter(
-            debate_judge_spectate='JUDGE', 
+            debate_judge_spectate='JUDGE',
             nov_pro='PRO').count()
 
         # print('needJudgeCount: ' + str(needJudgeCount))
@@ -94,16 +99,16 @@ class DeClasher:
         if haveJudgeCount < needJudgeCount:
             # diffJudgeCount = needJudgeCount - haveJudgeCount
             DJProCount = self.session.debaters.filter(
-                debate_judge_spectate='DJ', 
-                nov_pro='PRO', 
+                debate_judge_spectate='DJ',
+                nov_pro='PRO',
                 team__isnull=True).count()
 
-            
+
             # You are dealing with the remainders, don't have to worry about needJudgeCount
             if  DJProCount >= remainderDebaterCount:
                 DJProToSwitch += remainderDebaterCount
                 haveJudgeCount += remainderDebaterCount
-                remainderDebaterCount = 0       
+                remainderDebaterCount = 0
 
                 # The amount of DJPro left after taking into account of remainder.
                 DJProCount = DJProCount - DJProToSwitch
@@ -121,7 +126,7 @@ class DeClasher:
                         remainderDebaterCount = roomSize - DJProCount
                         DJProCount = 0
 
-                
+
             # If DJPro < remainders
             # You are dealing with the remainders, don't have to worry about needJudgeCount
             else:
@@ -134,8 +139,8 @@ class DeClasher:
         if haveJudgeCount < needJudgeCount:
             # print('DJProCount must be zero, count: ' + str(DJProCount))
             DJNovCount = self.session.debaters.filter(
-                debate_judge_spectate='DJ', 
-                nov_pro='NOV', 
+                debate_judge_spectate='DJ',
+                nov_pro='NOV',
                 team__isnull=True).count()
 
             if  DJNovCount >= remainderDebaterCount:
@@ -166,19 +171,19 @@ class DeClasher:
         # Exhausted DJNov, now deal with DPro
         if haveJudgeCount < needJudgeCount:
             DProCount = self.session.debaters.filter(
-                debate_judge_spectate='DEBATE', 
-                nov_pro='PRO', 
+                debate_judge_spectate='DEBATE',
+                nov_pro='PRO',
                 team__isnull=True).count()
-            
+
             # You are dealing with the remainders, don't have to worry about needJudgeCount
             if  DProCount >= remainderDebaterCount:
                 DProToSwitch += remainderDebaterCount
                 haveJudgeCount += remainderDebaterCount
-                remainderDebaterCount = 0       
+                remainderDebaterCount = 0
 
                 # The amount of DJPro left after taking into account of remainder.
                 DProCount = DProCount - DProToSwitch
-                
+
                 # remainderDebaterCount == 0
                 while haveJudgeCount < needJudgeCount and DProCount > 0:
                     if DProCount >= roomSize:
@@ -192,7 +197,7 @@ class DeClasher:
                         needJudgeCount -= 1
                         remainderDebaterCount = roomSize - DProCount
                         DProCount = 0
-                
+
             # If DJPro < remainders
             # You are dealing with the remainders, don't have to worry about needJudgeCount
             else:
@@ -220,6 +225,47 @@ class DeClasher:
         # Might be a good idea to print out needJudgeCount, debug it.
 
 
+
+    def checkAndSwitchJudge2(self):
+        def sortJudgePriority(debater):
+            if debater.nov_pro == "PRO" and debater.debate_judge_spectate == "DJ":
+                if (debater.teammates is not None) and len(debater.teammates.all()) <= 0:
+                    return 9100
+                else:
+                    return 9000
+            elif debater.nov_pro == "NOV" and debater.debate_judge_spectate == "DJ":
+                return 8000
+            elif debater.nov_pro == "PRO" and debater.debate_judge_spectate == "DEBATE":
+                return 7000
+            else:
+                return 6000
+
+
+        relevantDebaters = filter(lambda debater: debater.debate_judge_spectate in ["DEBATE", "DJ"], self.debaters)
+
+        requiredProJudgeCount = len(relevantDebaters) / 8
+        haveProJudgeCount = len(filter(lambda debater: debater.debate_judge_spectate == "JUDGE", self.debaters))
+
+        if haveProJudgeCount >= requiredProJudgeCount:
+            return
+
+        needProJudgeCount = requiredProJudgeCount - haveProJudgeCount
+
+        sortedDebaters = sorted(relevantDebaters, key=sortJudgePriority)
+
+        debatersToSwitch = sortedDebaters[:needProJudgeCount]
+
+        # TODO:Figure out how many to minus from here.
+
+        for debater in debatersToSwitch:
+            debater.debate_judge_spectate = "JUDGE"
+            debater.save()
+
+        self.debaters = Debater.objects.filter(session=self.session.id)
+
+
+
+
     def pairUp(self, relevantDebaters):
         threeMembersMode = (self.session.format == 'AP')
 
@@ -243,12 +289,15 @@ class DeClasher:
                     team = Team.objects.create(
                         session=self.session,
                         debate_judge_spectate='DEBATE')
+                    if not team:
+                        raise Error("yo")
+
                     partner.team = team
                     partner.save()
                     for leftOverDebater in leftOvers:
                         leftOverDebater.team = team
                         leftOverDebater.save()
-                    
+
 
                     if threeMembersMode and len(leftOvers) == 1:
                         # Since leftOvers is 1, we should have at least 2 loneDebaters.
@@ -270,6 +319,8 @@ class DeClasher:
                                 session=self.session,
                                 debate_judge_spectate='DEBATE',
                                 position=loneDebaters[i].position)
+                            if not team:
+                                raise Error("yo")
                             loneDebaters[i].team = team
                             loneDebaters[i+1].team = team
                             loneDebaters[i].save()
@@ -301,6 +352,8 @@ class DeClasher:
                         session=self.session,
                         debate_judge_spectate='DEBATE',
                         position=loneNovices[i].position)
+                    if not team:
+                        raise Error("yo")
                     loneNovices[i].team = team
                     lonePros[i].team = team
                     loneNovices[i].save()
@@ -316,6 +369,8 @@ class DeClasher:
                         session=self.session,
                         debate_judge_spectate='DEBATE',
                         position=loneNovices[i].position)
+                    if not team:
+                        raise Error("yo")
 
                     div3Amt -= 1
                     if novSwitch:
@@ -354,10 +409,12 @@ class DeClasher:
                     session=self.session,
                     debate_judge_spectate='DEBATE',
                     position=d.position)
-                
+                if not team:
+                        raise Error("yo")
+
                 if threeMembersMode and d.teammates.all().count() < 2:
                     incompleteTeamAcc.append(team)
-                    
+
                 for mate in d.teammates.all():
                     mate.team = team
                     mate.save()
@@ -407,7 +464,7 @@ class DeClasher:
             leftOvers = pairUpNNPP(
                 relevantDebaters.filter(
                     teammates__isnull=True,
-                    team__isnull=True, 
+                    team__isnull=True,
                     debate_judge_spectate='DEBATE',
                     nov_pro='NOV').distinct(),
                 [])
@@ -469,6 +526,113 @@ class DeClasher:
                     debate_judge_spectate='DJ').distinct(),
                 leftOvers)
 
+
+    def pairUp2(self):
+        def sortDebatePriority(debater):
+            if debater.debate_judge_spectate == "DEBATE":
+                if debater.nov_pro == "NOV":
+                    return 9000
+                else:
+                    return 8000
+            else:
+                if debater.nov_pro == "NOV":
+                    return 7000
+                else:
+                    return 6000
+
+        debaters = filter(lambda debater: debater.debate_judge_spectate in ["DEBATE", "DJ"]
+            and not debater.team, self.debaters)
+
+        noOfDebatersToLose = len(debaters) % 8
+
+        sortedDebaters = sorted(debaters, key=sortDebatePriority)
+
+        if noOfDebatersToLose <= 0:
+            debatingDebaters = sortedDebaters[:]
+        else:
+            debatingDebaters = sortedDebaters[:-noOfDebatersToLose]
+
+        self.noOfRooms = len(debatingDebaters) / 8
+
+        # Pair up all with teammates
+        for debater in debatingDebaters:
+            if debater.team:
+                continue
+
+            teammates = list(debater.teammates.all())
+            if teammates and teammates[0] in debatingDebaters:
+                team = Team.objects.create(
+                    session=self.session,
+                    debate_judge_spectate="DEBATE")
+
+                self.createdTeams.append(team)
+
+                debater.team = team
+                debater.save()
+
+                teammate = debatingDebaters[debatingDebaters.index(teammates[0])]
+                teammate.team = team
+                teammate.save()
+
+
+        def sortByNovPro(debater):
+            if debater.nov_pro == "NOV":
+                return 9000
+            else:
+                return 8000
+
+        debatingDebaters = sorted(debatingDebaters, key=sortByNovPro)
+
+        partner_pref = self.session.partner_pref
+        if partner_pref == "NNPP":
+            for i in range(0, debatingDebaters):
+                debater = debatingDebaters[i]
+                if debater.team:
+                    continue
+                team = Team.objects.create(
+                    session=self.session,
+                    debate_judge_spectate="DEBATE")
+
+                self.createdTeams.append(team)
+
+                debater.team = team
+                debater.save()
+
+                if i == len(debatingDebaters) - 1:
+                    continue
+
+                debatingDebaters[i + 1].team = team
+                debatingDebaters[i + 1].save()
+
+        else:
+            startIndex = 0
+            endIndex = len(debatingDebaters) - 1
+
+            while (endIndex - startIndex) >= 1:
+                while startIndex < len(debatingDebaters) and debatingDebaters[startIndex].team:
+                    startIndex = startIndex + 1
+
+                while endIndex >= 0 and debatingDebaters[endIndex].team:
+                    endIndex = endIndex - 1
+
+                if endIndex > startIndex:
+                    firstDebater = debatingDebaters[startIndex]
+                    secondDebater = debatingDebaters[endIndex]
+
+                    team = Team.objects.create(
+                        session=self.session,
+                        debate_judge_spectate="DEBATE")
+
+                    self.createdTeams.append(team)
+
+                    firstDebater.team = team
+                    firstDebater.save()
+                    secondDebater.team = team
+                    secondDebater.save()
+
+
+
+
     def assign2TeamRooms(self):
         # Assign assigned rooms first
         halfRoomList = []
@@ -484,7 +648,7 @@ class DeClasher:
                 for tup in halfRoomList:
                     if tup[0] == t.room:
                         halfRoomList.remove(tup)
-        
+
         # Fill the assigned rooms with teams that are not specifically assigned
         teamsNoRoom = self.session.teams.filter(room__isnull=True)
         if halfRoomList:
@@ -599,7 +763,7 @@ class DeClasher:
                 t.delete()
 
 
-    
+
     def assignBPTeamRooms(self):
         # Assign Teams with assigned rooms. This assumes we already have
         # enough judges.
@@ -618,9 +782,9 @@ class DeClasher:
                         t2.save()
                         processedTeams.append(t2)
 
-                if len(tSameRoom) < 4:                
+                if len(tSameRoom) < 4:
                     needTeamCount = 4 - len(tSameRoom)
-                    
+
                     addedTeams = self.session.teams.filter(room__isnull=True).order_by(
                         'team_members__debate_judge_spectate')[:needTeamCount]
 
@@ -647,7 +811,7 @@ class DeClasher:
         teamsNoRoomList = list(teamsNoRoom)
         # print('teamsnoroom length: ' + str(len(teamsNoRoomList)))
         roomList = list(roomQuery)
-        
+
         for i in range(0, self.debatingRoomCount):
             positionChoices = ['OG', 'OO', 'CG', 'CO']
             random.shuffle(positionChoices)
@@ -658,7 +822,7 @@ class DeClasher:
                     t.room = roomList[0]
                     t.position = positionChoices.pop()
                     t.save()
-                        
+
                 roomList.pop(0)
             else:
                 rm = Room.objects.create(
@@ -676,6 +840,44 @@ class DeClasher:
 
 
 
+    def assignBPTeamRooms2(self):
+        teamRoomIds = map(lambda team: team.room.id, self.teams)
+        rooms = Room.objects.filter(owner=self.session.owner)
+        rooms = filter(lambda room: room.id not in teamRoomIds, rooms)
+
+        roomDict = {}
+        for team in self.teams:
+            if not team.room in roomDict:
+                roomDict[team.room] = [team]
+            else:
+                roomDict[team.room].append(team)
+
+        while len(roomDict) < self.noOfRooms:
+            if len(rooms) > 0:
+                room = rooms.pop()
+            else:
+                room = Room.objects.create(
+                    location='Automated Room',
+                    owner=self.session.owner)
+
+            roomDict[room] = []
+
+        for room, teams in roomDict.iteritems():
+            positions = ["OG", "OO", "CG", "CO"]
+            random.shuffle(positions)
+
+            for team in teams:
+                team.position = positions.pop()
+                # We should already have the room here...
+                team.room = room
+                team.save()
+
+            while len(positions) > 0:
+                team = self.createdTeams.pop()
+                team.room = room
+                team.position = positions.pop()
+                team.save()
+
     def assignJudges(self):
         # Assign 1 pro judge per room first
         usedRoom = Room.objects.filter(teams__in=self.session.teams.all()).distinct()
@@ -683,8 +885,8 @@ class DeClasher:
         if not usedRoom: return
 
         proJudges = list(Debater.objects.filter(
-            session=self.session, 
-            nov_pro='PRO', 
+            session=self.session,
+            nov_pro='PRO',
             team__isnull=True
             ).exclude(debate_judge_spectate='SPEC').distinct())
 
@@ -695,6 +897,8 @@ class DeClasher:
                 room=usedRoom[i % len(usedRoom)],
                 position='JUDGE',
                 debate_judge_spectate='JUDGE')
+            if not team:
+                        raise Error("yo")
             proJudges[i].team = team
             proJudges[i].save()
 
@@ -711,12 +915,14 @@ class DeClasher:
                 room=usedRoom[(len(proJudges) + i) % len(usedRoom)],
                 position='JUDGE',
                 debate_judge_spectate='JUDGE')
+            if not team:
+                        raise Error("yo")
             restJudges[i].team = team
             restJudges[i].save()
 
     def declashifyAP(self):
         def checkAPInvariant(relevantDebaters, relevantDebatersCount):
-            if (relevantDebatersCount < (6*self.requiredProJudges) or 
+            if (relevantDebatersCount < (6*self.requiredProJudges) or
                     self.session.debaters.exclude(debate_judge_spectate='SPEC').count() < (7*self.requiredProJudges)):
                 return Response('Not enough debaters for the assigned rooms.', status=404)
 
@@ -734,7 +940,7 @@ class DeClasher:
 
         returnResponse = checkAPInvariant(relevantDebaters, relevantDebatersCount)
         if returnResponse: return returnResponse
-        
+
         self.checkAndSwitchJudge(relevantDebaters, 6)
 
         self.pairUp(relevantDebaters)
@@ -743,11 +949,11 @@ class DeClasher:
 
         serializer = SessionSerializer(self.session)
         return Response(serializer.data)
-        
+
 
     def declashifyBP(self):
         def checkBPInvariant(relevantDebatersCount):
-            if (relevantDebatersCount < (8*self.requiredProJudges) 
+            if (relevantDebatersCount < (8*self.requiredProJudges)
                     or self.session.debaters.exclude(debate_judge_spectate='SPEC').count() < (9*self.requiredProJudges)):
                 return Response('Not enough debaters for the assigned rooms.', status=404)
             elif self.session.debaters.exclude(team__isnull=False
@@ -755,7 +961,10 @@ class DeClasher:
                 return Response('Need more pro judges.', status=404)
             elif relevantDebatersCount < 8 or self.session.debaters.exclude(debate_judge_spectate='SPEC').count() < 9:
                 return Response('Not enough debaters to form a room.', status=404)
-        
+
+
+
+
         relevantDebaters = self.session.debaters.exclude(
             debate_judge_spectate='JUDGE'
             ).exclude(debate_judge_spectate='SPEC')
@@ -764,9 +973,14 @@ class DeClasher:
         returnResponse = checkBPInvariant(relevantDebatersCount)
         if returnResponse: return returnResponse
 
-        self.checkAndSwitchJudge(relevantDebaters, 8)
-        self.pairUp(relevantDebaters)
-        self.assignBPTeamRooms()
+        # self.checkAndSwitchJudge(relevantDebaters, 8)
+        # self.pairUp(relevantDebaters)
+        # self.assignBPTeamRooms()
+
+        self.checkAndSwitchJudge2()
+        self.pairUp2()
+        self.assignBPTeamRooms2()
+
         self.assignJudges()
 
         serializer = SessionSerializer(self.session)
@@ -774,7 +988,7 @@ class DeClasher:
 
     def declashifyCP(self):
         def checkCPInvariant(relevantDebaters, relevantDebatersCount):
-            if (relevantDebatersCount < (4*self.requiredProJudges) or 
+            if (relevantDebatersCount < (4*self.requiredProJudges) or
                     self.session.debaters.exclude(debate_judge_spectate='SPEC').count() < (5*self.requiredProJudges)):
                 return Response('Not enough debaters for the assigned rooms.', status=404)
 
@@ -792,7 +1006,7 @@ class DeClasher:
 
         returnResponse = checkCPInvariant(relevantDebaters, relevantDebatersCount)
         if returnResponse: return returnResponse
-        
+
         self.checkAndSwitchJudge(relevantDebaters, 4)
 
         # Now start to put debaters into teams, start by pairing up teammates
